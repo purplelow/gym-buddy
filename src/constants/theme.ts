@@ -1,65 +1,75 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * 짝짐 디자인 토큰 — Fitty(Behance) 레퍼런스 기반.
+ * 다크 온리 · 네온 라임 포인트 · Outfit 타이포.
  */
+export const colors = {
+  // Brand (Fitty main color scale)
+  brand: '#BAFA20',
+  brand400: '#AEDD46',
+  brand600: '#87AD35',
+  brand800: '#617B24',
+  brandDim: 'rgba(186, 250, 32, 0.14)',
 
-import '@/global.css';
+  // Surfaces
+  bg: '#0A0B08',
+  surface: '#151711',
+  surfaceRaised: '#1D1F18',
+  glass: 'rgba(255, 255, 255, 0.06)',
+  border: 'rgba(255, 255, 255, 0.10)',
+  borderStrong: 'rgba(255, 255, 255, 0.18)',
 
-import { Platform } from 'react-native';
+  // Text
+  textPrimary: '#FFFFFF',
+  textSecondary: '#DADADA',
+  textTertiary: '#808080',
+  textInvert: '#0A0B08',
+  textBrand: '#BAFA20',
 
-export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
+  // Status
+  danger: '#FF5A45',
+  info: '#0CD4FF',
+  warning: '#FFC24B',
+
+  // Social
+  kakao: '#FEE500',
+  kakaoText: '#191919',
+  google: '#FFFFFF',
+  googleText: '#1F1F1F',
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
-
-export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+export const font = {
+  regular: 'Outfit_400Regular',
+  medium: 'Outfit_500Medium',
+  semiBold: 'Outfit_600SemiBold',
+  bold: 'Outfit_700Bold',
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+/** Fitty 스펙: Heading 20–32, Body 16–18 */
+export const type = {
+  display: { fontFamily: font.bold, fontSize: 32, lineHeight: 40 },
+  h1: { fontFamily: font.semiBold, fontSize: 28, lineHeight: 36 },
+  h2: { fontFamily: font.semiBold, fontSize: 24, lineHeight: 32 },
+  h3: { fontFamily: font.semiBold, fontSize: 20, lineHeight: 28 },
+  bodyLg: { fontFamily: font.regular, fontSize: 18, lineHeight: 27 },
+  body: { fontFamily: font.regular, fontSize: 16, lineHeight: 24 },
+  bodyMd: { fontFamily: font.medium, fontSize: 16, lineHeight: 24 },
+  caption: { fontFamily: font.regular, fontSize: 13, lineHeight: 18 },
+  captionMd: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
+  stat: { fontFamily: font.bold, fontSize: 24, lineHeight: 30 },
+} as const;
+
+export const radius = {
+  sm: 10,
+  md: 16,
+  lg: 24,
+  pill: 999,
+} as const;
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+} as const;
