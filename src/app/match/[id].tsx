@@ -239,7 +239,7 @@ export default function MatchDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: { paddingVertical: spacing.sm },
+  topBar: { paddingTop: spacing.md, paddingBottom: spacing.sm },
   notFound: {
     flex: 1,
     alignItems: 'center',

@@ -25,7 +25,7 @@ export default function GymScreen() {
     <Screen bottomInset>
       <View style={styles.topBar}>
         <BackButton />
-        <View style={{ flex: 1 }}>
+        <View style={styles.titleWrap}>
           <Text variant="h2">{gym?.name ?? '내 헬스장'}</Text>
           <Text variant="caption" color={colors.textTertiary} style={styles.subtitle}>
             {gym?.address}
@@ -86,7 +86,7 @@ export default function GymScreen() {
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  titleWrap: { flex: 1, marginTop: 3 },
   subtitle: { marginTop: 2 },
   statCard: {
     flexDirection: 'row',

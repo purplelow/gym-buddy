@@ -1,17 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import {
-  FlatList,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-} from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, ProgressDots, Text } from '@/components/ui';
@@ -46,11 +44,19 @@ const SLIDES: Slide[] = [
   },
 ];
 
-const isWeb = Platform.OS === 'web';
+const LAST = SLIDES.length - 1;
 
-function SlideView({ slide, topInset }: { slide: Slide; topInset: number }) {
+function SlideView({
+  slide,
+  width,
+  topInset,
+}: {
+  slide: Slide;
+  width: number;
+  topInset: number;
+}) {
   return (
-    <View style={styles.slideFill}>
+    <View style={[styles.slideFill, { width }]}>
       <LinearGradient
         colors={slide.gradient}
         start={{ x: 0.5, y: 0.15 }}
@@ -77,52 +83,64 @@ export default function Intro() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const completeIntro = useAppStore((s) => s.completeIntro);
+
   const [index, setIndex] = useState(0);
-  const listRef = useRef<FlatList<Slide>>(null);
+  const translateX = useSharedValue(0);
 
   const finish = () => {
     completeIntro();
     router.replace('/(tabs)');
   };
 
-  const handleNext = () => {
-    if (index >= SLIDES.length - 1) {
-      finish();
-      return;
-    }
-    const next = index + 1;
-    setIndex(next);
-    // 네이티브만 스크롤 동기화 (웹은 state 기반 렌더)
-    if (!isWeb) {
-      listRef.current?.scrollToOffset({ offset: next * width, animated: true });
-    }
+  const goTo = (next: number) => {
+    const clamped = Math.min(LAST, Math.max(0, next));
+    setIndex(clamped);
+    translateX.value = withTiming(-clamped * width, { duration: 260 });
   };
 
-  const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+  const handleNext = () => {
+    if (index >= LAST) finish();
+    else goTo(index + 1);
   };
+
+  // 드래그 스와이프 (웹·네이티브 공통)
+  const pan = Gesture.Pan()
+    .activeOffsetX([-12, 12]) // 세로 스크롤과 충돌 방지
+    .onChange((e) => {
+      translateX.value = -index * width + e.translationX;
+    })
+    .onEnd((e) => {
+      const threshold = width * 0.2;
+      let next = index;
+      if (e.translationX < -threshold || e.velocityX < -500) next = index + 1;
+      else if (e.translationX > threshold || e.velocityX > 500) next = index - 1;
+      runOnJS(goTo)(next);
+    });
+
+  const trackStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
     <View style={styles.root}>
-      {isWeb ? (
-        // 웹: 스크롤 의존성 제거 — 현재 슬라이드만 state로 렌더
-        <SlideView slide={SLIDES[index]} topInset={insets.top} />
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={SLIDES}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.title}
-          onMomentumScrollEnd={handleMomentumEnd}
-          renderItem={({ item }) => (
-            <View style={{ width, height: '100%' }}>
-              <SlideView slide={item} topInset={insets.top} />
-            </View>
-          )}
-        />
-      )}
+      <GestureDetector gesture={pan}>
+        <Animated.View
+          style={[
+            styles.track,
+            { width: width * SLIDES.length },
+            trackStyle,
+          ]}
+        >
+          {SLIDES.map((slide) => (
+            <SlideView
+              key={slide.title}
+              slide={slide}
+              width={width}
+              topInset={insets.top}
+            />
+          ))}
+        </Animated.View>
+      </GestureDetector>
 
       <Pressable
         onPress={finish}
@@ -137,7 +155,7 @@ export default function Intro() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <ProgressDots total={SLIDES.length} index={index} />
         <Button
-          label={index === SLIDES.length - 1 ? '시작하기' : '다음'}
+          label={index === LAST ? '시작하기' : '다음'}
           onPress={handleNext}
           style={styles.nextButton}
         />
@@ -147,8 +165,9 @@ export default function Intro() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  slideFill: { flex: 1 },
+  root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
+  track: { flex: 1, flexDirection: 'row' },
+  slideFill: { height: '100%' },
   slideContent: {
     flex: 1,
     alignItems: 'center',

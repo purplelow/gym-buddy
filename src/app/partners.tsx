@@ -92,7 +92,7 @@ export default function PartnersScreen() {
     <Screen bottomInset>
       <View style={styles.topBar}>
         <BackButton />
-        <View>
+        <View style={styles.titleWrap}>
           <Text variant="h2">수준 매칭</Text>
           <View style={styles.gymRow}>
             <Ionicons name="location-outline" size={13} color={colors.textTertiary} />
@@ -182,7 +182,7 @@ export default function PartnersScreen() {
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  titleWrap: { marginTop: 3 },
   gymRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   banner: { marginBottom: spacing.md, gap: spacing.md },
   bannerButton: { alignSelf: 'flex-start' },

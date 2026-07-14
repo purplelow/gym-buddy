@@ -27,7 +27,22 @@ import { useAppStore } from '@/store/useAppStore';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { isLoggedIn, me, logout, matchRequests } = useAppStore();
+  const { isLoggedIn, me, logout, matchRequests, updateDraft } = useAppStore();
+
+  // 기존 프로필 값을 draft로 채워 온보딩을 "수정" 모드로 재사용
+  const handleEditProfile = () => {
+    if (!me) return;
+    updateDraft({
+      nickname: me.nickname,
+      sex: me.sex,
+      bodyWeight: me.bodyWeight,
+      lifts: me.lifts,
+      gymId: me.gymId,
+      slots: me.slots,
+      styleTags: me.styleTags,
+    });
+    router.push('/onboarding');
+  };
 
   // 비로그인 또는 프로필 미등록 상태
   if (!isLoggedIn || !me) {
@@ -229,8 +244,16 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        {/* 로그아웃 버튼 */}
-        <View style={styles.padded}>
+        {/* 프로필 수정 / 로그아웃 */}
+        <View style={[styles.padded, styles.actions]}>
+          <Button
+            label="프로필 수정"
+            variant="secondary"
+            icon={
+              <Ionicons name="create-outline" size={18} color={colors.textPrimary} />
+            }
+            onPress={handleEditProfile}
+          />
           <Button
             label="로그아웃"
             variant="danger"
@@ -294,6 +317,9 @@ const styles = StyleSheet.create({
   },
   padded: {
     paddingHorizontal: spacing.lg,
+  },
+  actions: {
+    gap: spacing.md,
   },
 
   // 비로그인 상태

@@ -26,7 +26,7 @@ export default function CrewScreen() {
     <Screen bottomInset>
       <View style={styles.topBar}>
         <BackButton />
-        <View>
+        <View style={styles.titleWrap}>
           <Text variant="h2">크루 매칭</Text>
           <Text variant="caption" color={colors.textTertiary} style={styles.subtitle}>
             같은 프로그램, 같은 주기로 함께
@@ -105,7 +105,7 @@ export default function CrewScreen() {
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  titleWrap: { marginTop: 3 },
   subtitle: { marginTop: 2 },
   list: { flex: 1 },
   listContent: { gap: spacing.md, paddingBottom: spacing.xl },
