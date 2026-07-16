@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -23,16 +24,30 @@ import {
   formatRelative,
 } from '@/lib/strength';
 import { useGym } from '@/hooks/useData';
-import { signOut } from '@/lib/auth';
+import { authErrorMessage, signOut, unlinkSocial } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type AuthProvider } from '@/store/useAppStore';
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const PROVIDER_META: Record<
+  AuthProvider,
+  { label: string; icon: IconName; color: string }
+> = {
+  email: { label: '이메일', icon: 'mail', color: colors.textSecondary },
+  google: { label: 'Google', icon: 'logo-google', color: '#FFFFFF' },
+  kakao: { label: '카카오', icon: 'chatbubble', color: colors.kakao },
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { me, matchRequests, updateDraft, clearSession } = useAppStore();
   const isLoggedIn = useAppStore((s) => s.userId !== null);
+  const authProvider = useAppStore((s) => s.authProvider);
   // 훅은 조기 return보다 위에서 호출해야 한다 (Rules of Hooks)
   const gym = useGym(me?.gymId);
+  const [unlinking, setUnlinking] = useState(false);
+  const [unlinkMsg, setUnlinkMsg] = useState<string | undefined>();
 
   const handleLogout = async () => {
     try {
@@ -42,6 +57,30 @@ export default function ProfileScreen() {
     }
     clearSession();
     router.replace('/(tabs)');
+  };
+
+  const handleUnlinkSocial = async () => {
+    if (authProvider !== 'google' && authProvider !== 'kakao') return;
+    setUnlinking(true);
+    setUnlinkMsg(undefined);
+    try {
+      const { ok, needsAnotherMethod } = await unlinkSocial(authProvider);
+      if (ok) {
+        // 해제 성공 → 세션 정리하고 홈으로
+        clearSession();
+        router.replace('/(tabs)');
+        return;
+      }
+      setUnlinkMsg(
+        needsAnotherMethod
+          ? '이 계정의 유일한 로그인 수단이라 해제할 수 없어요. 먼저 다른 로그인 수단을 연결해주세요.'
+          : '연동 해제할 소셜 계정을 찾지 못했어요.',
+      );
+    } catch (e) {
+      setUnlinkMsg(authErrorMessage(e));
+    } finally {
+      setUnlinking(false);
+    }
   };
 
   // 기존 프로필 값을 draft로 채워 온보딩을 "수정" 모드로 재사용
@@ -258,6 +297,64 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
+        {/* 로그인 방식 */}
+        {authProvider && (
+          <View style={styles.padded}>
+            <Card>
+              <Text variant="h3" style={{ marginBottom: spacing.md }}>
+                로그인 방식
+              </Text>
+              <View style={styles.providerRow}>
+                <View
+                  style={[
+                    styles.providerIcon,
+                    { backgroundColor: PROVIDER_META[authProvider].color + '22' },
+                  ]}
+                >
+                  <Ionicons
+                    name={PROVIDER_META[authProvider].icon}
+                    size={18}
+                    color={PROVIDER_META[authProvider].color}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text variant="bodyMd">
+                    {PROVIDER_META[authProvider].label}
+                    {authProvider !== 'email' ? ' 소셜 로그인' : ' 로그인'}
+                  </Text>
+                  <Text variant="caption" color={colors.textTertiary}>
+                    {authProvider === 'email'
+                      ? '이메일과 비밀번호로 로그인 중이에요'
+                      : `${PROVIDER_META[authProvider].label} 계정으로 연동되어 있어요`}
+                  </Text>
+                </View>
+              </View>
+
+              {(authProvider === 'google' || authProvider === 'kakao') && (
+                <>
+                  <Button
+                    label="소셜 연동 해제"
+                    variant="secondary"
+                    onPress={handleUnlinkSocial}
+                    loading={unlinking}
+                    disabled={unlinking}
+                    style={{ marginTop: spacing.md }}
+                  />
+                  {unlinkMsg && (
+                    <Text
+                      variant="caption"
+                      color={colors.danger}
+                      style={{ marginTop: spacing.sm }}
+                    >
+                      {unlinkMsg}
+                    </Text>
+                  )}
+                </>
+              )}
+            </Card>
+          </View>
+        )}
+
         {/* 프로필 수정 / 로그아웃 */}
         <View style={[styles.padded, styles.actions]}>
           <Button
@@ -390,5 +487,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
+  },
+
+  // 로그인 방식
+  providerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  providerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

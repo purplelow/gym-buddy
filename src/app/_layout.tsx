@@ -7,10 +7,12 @@ import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import type { Session } from '@supabase/supabase-js';
+
 import { AppShell } from '@/components/ui';
 import { colors } from '@/constants/theme';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type AuthProvider } from '@/store/useAppStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,14 +37,26 @@ export default function RootLayout() {
       return;
     }
 
+    // Supabase 세션의 실제 로그인 제공자를 읽어 store에 반영한다.
+    // (OAuth 웹 로그인은 리다이렉트로 돌아와 여기서 세션이 복원되므로,
+    //  login 화면에서 넘긴 provider가 아니라 세션 값을 신뢰한다.)
+    const providerOf = (session: Session | null): AuthProvider | null => {
+      const p = session?.user.app_metadata.provider;
+      if (p === 'google' || p === 'kakao') return p;
+      if (p === 'email') return 'email';
+      return session ? 'email' : null;
+    };
+
     supabase.auth
       .getSession()
-      .then(({ data }) => setSession(data.session?.user.id ?? null))
+      .then(({ data }) =>
+        setSession(data.session?.user.id ?? null, providerOf(data.session)),
+      )
       .catch((e) => console.warn('[짝짐] 세션 복원 실패', e))
       .finally(() => setHydrated(true));
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session?.user.id ?? null);
+      setSession(session?.user.id ?? null, providerOf(session));
     });
     return () => sub.subscription.unsubscribe();
   }, []);

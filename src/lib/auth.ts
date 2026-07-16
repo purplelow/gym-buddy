@@ -28,6 +28,9 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function signInWithOAuth(provider: OAuthProvider) {
+  // 참고: Supabase의 Kakao 기본 scope에 account_email이 하드코딩돼 있어,
+  //       options.scopes로는 덮어쓸 수 없다(추가만 됨). 실제 authorize 요청으로 확인.
+  //       account_email 필수 동의는 카카오 비즈 앱 전환이 필요하다.
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
@@ -60,6 +63,39 @@ export async function signInWithOAuth(provider: OAuthProvider) {
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+}
+
+/** 이 계정에 연결된 로그인 신원(provider) 목록 */
+export async function listIdentityProviders(): Promise<string[]> {
+  const { data, error } = await supabase.auth.getUserIdentities();
+  if (error) throw error;
+  return (data?.identities ?? []).map((i) => i.provider);
+}
+
+/**
+ * 소셜 신원 연동 해제.
+ *
+ * Supabase는 계정의 "마지막 신원"은 해제할 수 없다(고아 계정 방지).
+ * 즉 소셜로만 가입한 유저는 먼저 이메일 비밀번호를 설정해야 해제 가능하다.
+ * 그 경우 needsAnotherMethod: true를 돌려주고, 화면에서 안내한다.
+ */
+export async function unlinkSocial(
+  provider: OAuthProvider,
+): Promise<{ ok: boolean; needsAnotherMethod?: boolean }> {
+  const { data, error: listError } = await supabase.auth.getUserIdentities();
+  if (listError) throw listError;
+
+  const identities = data?.identities ?? [];
+  if (identities.length <= 1) {
+    return { ok: false, needsAnotherMethod: true };
+  }
+
+  const target = identities.find((i) => i.provider === provider);
+  if (!target) return { ok: false };
+
+  const { error } = await supabase.auth.unlinkIdentity(target);
+  if (error) throw error;
+  return { ok: true };
 }
 
 export async function getSession() {

@@ -27,6 +27,9 @@ export default function OnboardingBasicInfo() {
   const router = useRouter();
   const draft = useAppStore((s) => s.draft);
   const updateDraft = useAppStore((s) => s.updateDraft);
+  // 이미 프로필이 있으면 마이페이지에서 온 "수정 모드" → 뒤로가기 허용.
+  // 신규 가입 흐름(me 없음)에서는 되돌아갈 곳이 없어 뒤로가기를 숨긴다.
+  const isEditing = useAppStore((s) => s.me !== null);
 
   const [nickname, setNickname] = useState(draft.nickname ?? '');
   const [sex, setSex] = useState<Sex | undefined>(draft.sex);
@@ -42,7 +45,7 @@ export default function OnboardingBasicInfo() {
 
   return (
     <Screen bottomInset>
-      <OnboardingHeader step={1} total={TOTAL_STEPS} canGoBack={false} />
+      <OnboardingHeader step={1} total={TOTAL_STEPS} canGoBack={isEditing} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
