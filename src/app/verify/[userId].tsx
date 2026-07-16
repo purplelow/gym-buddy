@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { BackButton, Button, Card, Screen, Text } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
-import { userById, gymById } from '@/lib/mock';
+import { useGym, useProfile } from '@/hooks/useData';
 
 type Step = 1 | 2 | 3;
 
@@ -18,8 +18,8 @@ export default function VerifyScreen() {
 
   const [step, setStep] = useState<Step>(1);
 
-  const partner = userId ? userById(userId) : null;
-  const partnerGym = partner ? gymById(partner.gymId) : null;
+  const { profile: partner } = useProfile(userId);
+  const partnerGym = useGym(partner?.gymId);
 
   const handleVerifyStep2 = useCallback(() => {
     if (!userId) return;

@@ -41,3 +41,10 @@ example
 # generated native folders
 /ios
 /android
+
+# 환경변수 (실제 키)
+.env
+.env.local
+
+# Cloudflare
+.wrangler/

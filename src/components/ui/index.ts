@@ -1,3 +1,4 @@
+export { AppShell, MAX_CONTENT_WIDTH, useContentWidth } from './AppShell';
 export { BackButton } from './BackButton';
 export { Badge, VerificationBadge } from './Badge';
 export { Button } from './Button';

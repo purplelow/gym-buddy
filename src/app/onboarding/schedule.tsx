@@ -6,10 +6,9 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from 'react-native';
 
-import { Button, OnboardingHeader, Screen, Text } from '@/components/ui';
+import { Button, OnboardingHeader, Screen, Text, useContentWidth } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -27,7 +26,8 @@ const GRID_COLUMNS = 8; // 1 label column + 7 weekday columns
 
 export default function OnboardingSchedule() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  // 창 너비가 아니라 셸(콘텐츠) 폭 기준으로 셀 크기를 계산한다
+  const width = useContentWidth();
   const draft = useAppStore((s) => s.draft);
   const updateDraft = useAppStore((s) => s.updateDraft);
 

@@ -12,36 +12,73 @@ import {
 
 import { BackButton, Button, Input, Screen, Text } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
+import { authErrorMessage, signInWithEmail, signInWithOAuth } from '@/lib/auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Login() {
   const router = useRouter();
-  const login = useAppStore((s) => s.login);
+  const setSession = useAppStore((s) => s.setSession);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [formError, setFormError] = useState<string | undefined>();
+  const [loading, setLoading] = useState(false);
 
   const afterLogin = () => {
+    // setSession이 서버 프로필을 채운 뒤 분기
     const me = useAppStore.getState().me;
-    if (me) router.replace('/(tabs)');
-    else router.replace('/onboarding');
+    router.replace(me ? '/(tabs)' : '/onboarding');
   };
 
-  const handleEmailLogin = () => {
+  const handleEmailLogin = async () => {
     const eErr = email.trim() ? undefined : '이메일을 입력해주세요';
     const pErr = password ? undefined : '비밀번호를 입력해주세요';
     setEmailError(eErr);
     setPasswordError(pErr);
+    setFormError(undefined);
     if (eErr || pErr) return;
-    login('email');
-    afterLogin();
+
+    // Supabase 미설정 시 목 로그인으로 폴백 (UI만 돌려볼 때)
+    if (!isSupabaseConfigured) {
+      await setSession(`mock_${email.trim()}`, 'email');
+      afterLogin();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { user } = await signInWithEmail(email.trim(), password);
+      await setSession(user?.id ?? null, 'email');
+      afterLogin();
+    } catch (e) {
+      setFormError(authErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSocial = (provider: 'kakao' | 'google') => {
-    login(provider);
-    afterLogin();
+  const handleSocial = async (provider: 'kakao' | 'google') => {
+    setFormError(undefined);
+    if (!isSupabaseConfigured) {
+      await setSession(`mock_${provider}`, provider);
+      afterLogin();
+      return;
+    }
+    setLoading(true);
+    try {
+      await signInWithOAuth(provider);
+      // 웹: 리다이렉트로 페이지가 다시 뜨며 _layout이 세션을 복원
+      // 네이티브: 아래에서 세션 확인 후 분기
+      const userId = useAppStore.getState().userId;
+      if (userId) afterLogin();
+    } catch (e) {
+      setFormError(authErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,7 +119,17 @@ export default function Login() {
               onChangeText={setPassword}
               error={passwordError}
             />
-            <Button label="로그인" onPress={handleEmailLogin} style={styles.loginButton} />
+            {formError ? (
+              <Text variant="caption" color={colors.danger}>
+                {formError}
+              </Text>
+            ) : null}
+            <Button
+              label="로그인"
+              onPress={handleEmailLogin}
+              loading={loading}
+              style={styles.loginButton}
+            />
           </View>
 
           <View style={styles.dividerRow}>

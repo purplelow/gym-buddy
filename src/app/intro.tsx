@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, ProgressDots, Text } from '@/components/ui';
+import { Button, ProgressDots, Text, useContentWidth } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -81,7 +81,8 @@ function SlideView({
 export default function Intro() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  // 창 너비가 아니라 셸(콘텐츠) 폭을 써야 PC에서 슬라이드가 어긋나지 않는다
+  const width = useContentWidth();
   const completeIntro = useAppStore((s) => s.completeIntro);
 
   const [index, setIndex] = useState(0);

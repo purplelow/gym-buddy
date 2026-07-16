@@ -6,8 +6,8 @@ import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { MatchCard } from '@/components/match/MatchCard';
 import { BackButton, Button, Card, Chip, Screen, Text } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
+import { useGym, useGymMembers } from '@/hooks/useData';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { gymById, MOCK_USERS } from '@/lib/mock';
 import {
   overlappingSlots,
   relativeStrength,
@@ -45,15 +45,13 @@ export default function PartnersScreen() {
     });
   };
 
-  const gym = gymById(me?.gymId ?? 'g1');
+  const gymId = me?.gymId ?? 'g1';
+  const gym = useGym(gymId);
+  const { members } = useGymMembers(gymId);
 
   const partners = useMemo<UserProfile[]>(() => {
     const meProfile = me;
-    const gymId = meProfile?.gymId ?? 'g1';
-
-    let list = MOCK_USERS.filter(
-      (u) => u.gymId === gymId && u.id !== meProfile?.id,
-    );
+    let list = members;
 
     if (meProfile) {
       const myRel = relativeStrength(meProfile.lifts, meProfile.bodyWeight);
@@ -86,7 +84,7 @@ export default function PartnersScreen() {
     }
 
     return list;
-  }, [me, selectedRange, overlapOnly, selectedTags]);
+  }, [me, members, selectedRange, overlapOnly, selectedTags]);
 
   return (
     <Screen bottomInset>

@@ -22,12 +22,27 @@ import {
   wilksScore,
   formatRelative,
 } from '@/lib/strength';
-import { gymById } from '@/lib/mock';
+import { useGym } from '@/hooks/useData';
+import { signOut } from '@/lib/auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { isLoggedIn, me, logout, matchRequests, updateDraft } = useAppStore();
+  const { me, matchRequests, updateDraft, clearSession } = useAppStore();
+  const isLoggedIn = useAppStore((s) => s.userId !== null);
+  // 훅은 조기 return보다 위에서 호출해야 한다 (Rules of Hooks)
+  const gym = useGym(me?.gymId);
+
+  const handleLogout = async () => {
+    try {
+      if (isSupabaseConfigured) await signOut();
+    } catch (e) {
+      console.warn('[짝짐] 로그아웃 실패', e);
+    }
+    clearSession();
+    router.replace('/(tabs)');
+  };
 
   // 기존 프로필 값을 draft로 채워 온보딩을 "수정" 모드로 재사용
   const handleEditProfile = () => {
@@ -80,7 +95,6 @@ export default function ProfileScreen() {
   }
 
   // 로그인 + 프로필 등록 상태
-  const gym = gymById(me.gymId);
   const initials = me.nickname.charAt(0).toUpperCase();
   const total = totalLifts(me.lifts);
   const relative = relativeStrength(me.lifts, me.bodyWeight);
@@ -254,14 +268,7 @@ export default function ProfileScreen() {
             }
             onPress={handleEditProfile}
           />
-          <Button
-            label="로그아웃"
-            variant="danger"
-            onPress={() => {
-              logout();
-              router.replace('/(tabs)');
-            }}
-          />
+          <Button label="로그아웃" variant="danger" onPress={handleLogout} />
         </View>
 
         {/* 하단 버전 정보 */}
@@ -271,7 +278,7 @@ export default function ProfileScreen() {
             color={colors.textTertiary}
             style={{ textAlign: 'center', marginTop: spacing.lg }}
           >
-            짝짐 v0.1 — MVP
+            Gym-Buddy v0.1 — MVP
           </Text>
         </View>
       </ScrollView>

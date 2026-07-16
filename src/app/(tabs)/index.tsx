@@ -7,8 +7,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { MatchCard } from '@/components/match/MatchCard';
 import { Button, Card, Screen, Text } from '@/components/ui';
 import { colors, font, radius, spacing } from '@/constants/theme';
+import { useGym, useGymMembers } from '@/hooks/useData';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { gymById, MOCK_USERS } from '@/lib/mock';
 import { overlappingSlots, relativeStrength } from '@/lib/strength';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -21,12 +21,13 @@ export default function HomeScreen() {
   const me = useAppStore((s) => s.me);
   const hasProfile = me !== null;
 
-  const gym = gymById(me?.gymId ?? 'g1');
+  const gymId = me?.gymId ?? 'g1';
+  const gym = useGym(gymId);
+  const { members } = useGymMembers(gymId);
 
   // 내 수준 근접 추천 미리보기 (top 2)
   const recommended = useMemo(() => {
-    const gymId = me?.gymId ?? 'g1';
-    const list = MOCK_USERS.filter((u) => u.gymId === gymId && u.id !== me?.id);
+    const list = members;
     if (!me) return list.slice(0, 2);
     const myRel = relativeStrength(me.lifts, me.bodyWeight);
     return [...list]
@@ -36,7 +37,7 @@ export default function HomeScreen() {
           Math.abs(relativeStrength(b.lifts, b.bodyWeight) - myRel),
       )
       .slice(0, 2);
-  }, [me]);
+  }, [me, members]);
 
   return (
     <Screen>
@@ -46,7 +47,7 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <Text variant="h1" color={colors.brand} style={styles.brand}>
-            짝짐
+            Gym-Buddy
           </Text>
           <View style={styles.gymRow}>
             <Ionicons name="location-outline" size={14} color={colors.textTertiary} />

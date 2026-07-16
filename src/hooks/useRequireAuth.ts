@@ -10,7 +10,7 @@ import { useAppStore } from '@/store/useAppStore';
  */
 export function useRequireAuth() {
   const router = useRouter();
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAppStore((s) => s.userId !== null);
   const hasProfile = useAppStore((s) => s.me !== null);
 
   const gate = useCallback(

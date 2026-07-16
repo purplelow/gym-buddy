@@ -1,0 +1,41 @@
+<!--
+  Gym-Buddy 앱 아이콘 원본 (1024x1024)
+  디자인 토큰 준수: 배경 #0A0B08, 포인트 #BAFA20 (src/constants/theme.ts)
+
+  텍스트를 넣지 않는다: favicon(48px)에서 글자는 뭉개져 식별을 오히려 방해한다.
+  브랜드명은 로고(logo-source.svg)가 담당한다.
+
+  생성: npm run icon
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#16240A"/>
+      <stop offset="0.55" stop-color="#0A0B08"/>
+      <stop offset="1" stop-color="#0A0B08"/>
+    </linearGradient>
+    <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#BAFA20"/>
+      <stop offset="1" stop-color="#AEDD46"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.52">
+      <stop offset="0" stop-color="#BAFA20" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#BAFA20" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="512" r="400" fill="url(#glow)"/>
+
+  <!-- 바벨 (수직 중심 512). 작은 크기에서도 형태가 유지되도록 두껍게. -->
+  <g fill="url(#lime)">
+    <!-- 바 -->
+    <rect x="330" y="476" width="364" height="72" rx="36"/>
+    <!-- 안쪽 원판 -->
+    <rect x="248" y="376" width="88" height="272" rx="44"/>
+    <rect x="688" y="376" width="88" height="272" rx="44"/>
+    <!-- 바깥 원판 -->
+    <rect x="140" y="432" width="76" height="160" rx="38"/>
+    <rect x="808" y="432" width="76" height="160" rx="38"/>
+  </g>
+</svg>

@@ -14,7 +14,7 @@ import { Badge, Button, Card, Chip, Input, Screen, Text } from '@/components/ui'
 import { colors, radius, spacing, type } from '@/constants/theme';
 import { useAppStore } from '@/store/useAppStore';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { userById, gymById } from '@/lib/mock';
+import { useGymMembers, useSpotRequests } from '@/hooks/useData';
 import { relativeStrength, formatRelative } from '@/lib/strength';
 import type { SpotRequest } from '@/types';
 
@@ -22,7 +22,6 @@ export default function SpotScreen() {
   const router = useRouter();
   const { gate, isLoggedIn } = useRequireAuth();
   const me = useAppStore((s) => s.me);
-  const spotRequests = useAppStore((s) => s.spotRequests);
   const addSpotRequest = useAppStore((s) => s.addSpotRequest);
 
   const [showModal, setShowModal] = useState(false);
@@ -31,8 +30,11 @@ export default function SpotScreen() {
   const [message, setMessage] = useState('');
   const [expiresInMin, setExpiresInMin] = useState(15);
   const [helpedRequests, setHelpedRequests] = useState<Set<string>>(new Set());
+  const [creating, setCreating] = useState(false);
 
   const myGymId = me?.gymId ?? 'g1';
+  const { spotRequests } = useSpotRequests(myGymId);
+  const { members } = useGymMembers(myGymId);
 
   // 내 헬스장의 요청만 필터 + 최신순 정렬
   const filteredRequests = useMemo(() => {
@@ -47,29 +49,28 @@ export default function SpotScreen() {
     return Math.max(0, expiresInMin - elapsed);
   };
 
-  const handleCreateRequest = useCallback(() => {
+  const handleCreateRequest = useCallback(async () => {
     if (!selectedExercise || !targetWeight || !me) return;
-
-    const newRequest: SpotRequest = {
-      id: `s_${Date.now()}`,
-      userId: me.id,
-      gymId: myGymId,
-      exercise: selectedExercise,
-      targetWeight: parseInt(targetWeight, 10),
-      message: message || undefined,
-      expiresInMin,
-      createdAt: new Date().toISOString(),
-    };
-
-    addSpotRequest(newRequest);
-
-    // Reset form
-    setSelectedExercise(null);
-    setTargetWeight('');
-    setMessage('');
-    setExpiresInMin(15);
-    setShowModal(false);
-  }, [selectedExercise, targetWeight, me, myGymId, expiresInMin, message, addSpotRequest]);
+    setCreating(true);
+    try {
+      await addSpotRequest({
+        exercise: selectedExercise,
+        targetWeight: parseInt(targetWeight, 10),
+        message: message || undefined,
+        expiresInMin,
+      });
+      // Reset form
+      setSelectedExercise(null);
+      setTargetWeight('');
+      setMessage('');
+      setExpiresInMin(15);
+      setShowModal(false);
+    } catch (e) {
+      console.warn('[짝짐] 스팟 요청 생성 실패', e);
+    } finally {
+      setCreating(false);
+    }
+  }, [selectedExercise, targetWeight, me, expiresInMin, message, addSpotRequest]);
 
   const handleHelp = useCallback((requestId: string) => {
     gate(() => {
@@ -79,7 +80,8 @@ export default function SpotScreen() {
 
   const renderRequestCard = ({ item: request }: { item: SpotRequest }) => {
     const requester =
-      userById(request.userId) ?? (me && request.userId === me.id ? me : undefined);
+      members.find((u) => u.id === request.userId) ??
+      (me && request.userId === me.id ? me : undefined);
     if (!requester) return null;
 
     const timeRemaining = getTimeRemaining(request.createdAt, request.expiresInMin);
@@ -266,6 +268,7 @@ export default function SpotScreen() {
             <Button
               label="요청 올리기"
               onPress={handleCreateRequest}
+              loading={creating}
               disabled={!selectedExercise || !targetWeight}
               style={styles.submitButton}
             />

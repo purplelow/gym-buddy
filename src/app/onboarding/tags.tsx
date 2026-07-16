@@ -12,7 +12,7 @@ import {
 
 import { Button, Card, Chip, Input, OnboardingHeader, Screen, Text } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
-import { gymById } from '@/lib/mock';
+import { useGym } from '@/hooks/useData';
 import { formatRelative, relativeStrength, totalLifts } from '@/lib/strength';
 import { useAppStore } from '@/store/useAppStore';
 import { STYLE_TAG_LABEL, type Lifts, type StyleTag } from '@/types';
@@ -26,8 +26,11 @@ export default function OnboardingTags() {
   const me = useAppStore((s) => s.me);
   const completeProfile = useAppStore((s) => s.completeProfile);
 
+  const userId = useAppStore((s) => s.userId);
   const [styleTags, setStyleTags] = useState<StyleTag[]>(draft.styleTags ?? []);
-  const [intro, setIntro] = useState('');
+  const [intro, setIntro] = useState(me?.intro ?? '');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | undefined>();
 
   const toggleTag = (tag: StyleTag) => {
     setStyleTags((prev) =>
@@ -45,23 +48,34 @@ export default function OnboardingTags() {
   };
   const total = totalLifts(previewLifts);
   const relative = draft.bodyWeight ? relativeStrength(previewLifts, draft.bodyWeight) : 0;
-  const gymName = gymById(draft.gymId)?.name ?? '헬스장 미선택';
+  const gymName = useGym(draft.gymId)?.name ?? '헬스장 미선택';
 
-  const handleComplete = () => {
-    if (!isValid) return;
-    completeProfile({
-      id: 'me',
-      nickname: draft.nickname ?? '',
-      sex: draft.sex ?? 'male',
-      bodyWeight: draft.bodyWeight ?? 0,
-      lifts: previewLifts,
-      gymId: draft.gymId ?? '',
-      slots: draft.slots ?? [],
-      styleTags,
-      verification: 'unverified',
-      intro: intro.trim() || undefined,
-    });
-    router.replace('/(tabs)');
+  const handleComplete = async () => {
+    if (!isValid || !userId) return;
+    setSaving(true);
+    setSaveError(undefined);
+    try {
+      await completeProfile({
+        // 프로필 id는 Supabase auth.users.id와 동일해야 한다
+        id: userId,
+        nickname: draft.nickname ?? '',
+        sex: draft.sex ?? 'male',
+        bodyWeight: draft.bodyWeight ?? 0,
+        lifts: previewLifts,
+        gymId: draft.gymId ?? '',
+        slots: draft.slots ?? [],
+        styleTags,
+        // 기존 검증 등급은 유지 (수정 시 초기화 금지)
+        verification: me?.verification ?? 'unverified',
+        intro: intro.trim() || undefined,
+      });
+      router.replace('/(tabs)');
+    } catch (e) {
+      console.warn('[짝짐] 프로필 저장 실패', e);
+      setSaveError('프로필 저장에 실패했어요. 잠시 후 다시 시도해주세요');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // 새로고침 등으로 draft가 비면 1단계부터 다시 (완료 직후 draft 초기화와는 me로 구분)
@@ -143,7 +157,17 @@ export default function OnboardingTags() {
       </KeyboardAvoidingView>
 
       <View style={styles.footer}>
-        <Button label="완료" onPress={handleComplete} disabled={!isValid} />
+        {saveError ? (
+          <Text variant="caption" color={colors.danger} style={styles.saveError}>
+            {saveError}
+          </Text>
+        ) : null}
+        <Button
+          label="완료"
+          onPress={handleComplete}
+          disabled={!isValid}
+          loading={saving}
+        />
       </View>
     </Screen>
   );
@@ -174,5 +198,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginHorizontal: spacing.md,
   },
-  footer: { paddingTop: spacing.md },
+  footer: { paddingTop: spacing.md, gap: spacing.sm },
+  saveError: { textAlign: 'center' },
 });

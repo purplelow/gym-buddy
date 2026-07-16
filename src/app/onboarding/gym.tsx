@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Input, OnboardingHeader, Screen, Text } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
-import { GYMS } from '@/lib/mock';
+import { useGyms } from '@/hooks/useData';
 import { useAppStore } from '@/store/useAppStore';
 
 const TOTAL_STEPS = 5;
@@ -15,6 +15,7 @@ export default function OnboardingGym() {
   const draft = useAppStore((s) => s.draft);
   const updateDraft = useAppStore((s) => s.updateDraft);
 
+  const { gyms: GYMS } = useGyms();
   const [query, setQuery] = useState('');
   const [gymId, setGymId] = useState<string | undefined>(draft.gymId);
 
@@ -22,7 +23,7 @@ export default function OnboardingGym() {
     const q = query.trim();
     if (!q) return GYMS;
     return GYMS.filter((g) => g.name.includes(q) || g.address.includes(q));
-  }, [query]);
+  }, [query, GYMS]);
 
   const isValid = !!gymId;
 

@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BackButton, Button, Card, Chip, Screen, Text, VerificationBadge } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { gymById, userById } from '@/lib/mock';
+import { useGym, useProfile } from '@/hooks/useData';
 import {
   formatRelative,
   overlappingSlots,
@@ -37,7 +37,11 @@ export default function MatchDetailScreen() {
   const setMatchStatus = useAppStore((s) => s.setMatchStatus);
   const req = useMatchStatusFor(id ?? '');
 
-  const user = id ? userById(id) : undefined;
+  const { profile: user, loading: userLoading } = useProfile(id);
+
+  const gym = useGym(user?.gymId);
+
+  if (userLoading) return <Screen bottomInset />;
 
   if (!user) {
     return (
@@ -58,7 +62,6 @@ export default function MatchDetailScreen() {
     );
   }
 
-  const gym = gymById(user.gymId);
   const relative = relativeStrength(user.lifts, user.bodyWeight);
   const wilks = wilksScore(user.lifts, user.bodyWeight, user.sex);
   const overlap = me ? overlappingSlots(me.slots, user.slots) : [];

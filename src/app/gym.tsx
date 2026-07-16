@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { BackButton, Card, Screen, Text, VerificationBadge } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
-import { gymById, MOCK_USERS } from '@/lib/mock';
+import { useGym, useGymMembers } from '@/hooks/useData';
 import { formatRelative, relativeStrength } from '@/lib/strength';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -15,10 +15,8 @@ export default function GymScreen() {
   const spotRequests = useAppStore((s) => s.spotRequests);
 
   const myGymId = me?.gymId ?? 'g1';
-  const gym = gymById(myGymId);
-  const members = MOCK_USERS.filter(
-    (u) => u.gymId === myGymId && u.id !== me?.id,
-  );
+  const gym = useGym(myGymId);
+  const { members } = useGymMembers(myGymId);
   const liveSpots = spotRequests.filter((r) => r.gymId === myGymId).length;
 
   return (

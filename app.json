@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "짝짐",
+    "name": "Gym-Buddy",
     "slug": "gym-buddy",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "bundler": "metro",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

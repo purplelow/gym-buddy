@@ -12,12 +12,16 @@ import {
 
 import { BackButton, Button, Input, Screen, Text } from '@/components/ui';
 import { colors, spacing } from '@/constants/theme';
+import { authErrorMessage, signUpWithEmail } from '@/lib/auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Signup() {
   const router = useRouter();
-  const login = useAppStore((s) => s.login);
+  const setSession = useAppStore((s) => s.setSession);
   const updateDraft = useAppStore((s) => s.updateDraft);
+  const [formError, setFormError] = useState<string | undefined>();
+  const [loading, setLoading] = useState(false);
 
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
@@ -29,7 +33,7 @@ export default function Signup() {
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [confirmError, setConfirmError] = useState<string | undefined>();
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     const nErr =
       nickname.trim().length >= 2 ? undefined : '닉네임은 2자 이상 입력해주세요';
     const eErr = email.includes('@') ? undefined : '올바른 이메일 형식이 아니에요';
@@ -43,12 +47,34 @@ export default function Signup() {
     setEmailError(eErr);
     setPasswordError(pErr);
     setConfirmError(cErr);
+    setFormError(undefined);
 
     if (nErr || eErr || pErr || cErr) return;
 
+    // 닉네임은 온보딩에서 프로필로 확정되므로 draft에 보관
     updateDraft({ nickname: nickname.trim() });
-    login('email');
-    router.replace('/onboarding');
+
+    if (!isSupabaseConfigured) {
+      await setSession(`mock_${email.trim()}`, 'email');
+      router.replace('/onboarding');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { user, session } = await signUpWithEmail(email.trim(), password);
+      if (!session) {
+        // 이메일 확인이 켜져 있으면 세션 없이 가입만 된다
+        setFormError('가입 확인 메일을 보냈어요. 메일함을 확인한 뒤 로그인해주세요');
+        return;
+      }
+      await setSession(user?.id ?? null, 'email');
+      router.replace('/onboarding');
+    } catch (e) {
+      setFormError(authErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,7 +91,7 @@ export default function Signup() {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.header}>
-            <Text variant="h1">짝짐이 처음이시죠?</Text>
+            <Text variant="h1">Gym-Buddy가 처음이시죠?</Text>
             <Text variant="body" color={colors.textSecondary} style={styles.subtitle}>
               몇 가지 정보만 입력하면 바로 시작할 수 있어요
             </Text>
@@ -104,7 +130,17 @@ export default function Signup() {
               onChangeText={setConfirmPassword}
               error={confirmError}
             />
-            <Button label="가입하기" onPress={handleSignup} style={styles.signupButton} />
+            {formError ? (
+              <Text variant="caption" color={colors.danger}>
+                {formError}
+              </Text>
+            ) : null}
+            <Button
+              label="가입하기"
+              onPress={handleSignup}
+              loading={loading}
+              style={styles.signupButton}
+            />
           </View>
 
           <View style={styles.footer}>

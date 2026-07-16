@@ -10,7 +10,7 @@ import { useAppStore } from '@/store/useAppStore';
  */
 export default function Index() {
   const hasSeenIntro = useAppStore((s) => s.hasSeenIntro);
-  const isLoggedIn = useAppStore((s) => s.isLoggedIn);
+  const isLoggedIn = useAppStore((s) => s.userId !== null);
   const hasProfile = useAppStore((s) => s.me !== null);
 
   if (!hasSeenIntro) return <Redirect href="/intro" />;
