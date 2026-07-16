@@ -35,7 +35,24 @@ if (!url || !key) {
   console.error(
     '❌ EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY 가 없습니다.',
   );
-  console.error('   → cp .env.example .env 후 값을 채우세요.');
+  // 어디까지 보이는지 찍어 원인을 좁힌다 (값은 노출하지 않고 키 이름만)
+  const expoKeys = Object.keys(process.env).filter((k) =>
+    k.startsWith('EXPO_PUBLIC_'),
+  );
+  console.error('   ── 진단 ──────────────────────────────');
+  console.error(`   CI 환경          : ${process.env.CI ? 'yes' : 'no'}`);
+  console.error(`   CF_PAGES         : ${process.env.CF_PAGES ?? '(없음)'}`);
+  console.error(`   CF_PAGES_BRANCH  : ${process.env.CF_PAGES_BRANCH ?? '(없음)'}`);
+  console.error(`   .env 파일        : ${existsSync('.env') ? '있음' : '없음'}`);
+  console.error(
+    `   process.env의 EXPO_PUBLIC_* : ${expoKeys.length ? expoKeys.join(', ') : '(하나도 없음)'}`,
+  );
+  console.error('   ─────────────────────────────────────');
+  console.error('   로컬  → cp .env.example .env 후 값 채우기');
+  console.error(
+    '   CF    → Settings > Variables and Secrets 에 두 변수를 추가하고',
+  );
+  console.error('           해당 환경(Production/Preview)에 적용됐는지 확인');
   process.exit(1);
 }
 
