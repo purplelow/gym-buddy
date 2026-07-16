@@ -3,7 +3,7 @@
  *
  * 문제: Expo는 패키지(node_modules) 안의 에셋을 dist/assets/node_modules/... 로 출력하는데,
  *       wrangler(Cloudflare Pages)는 업로드 시 "node_modules" 경로를 하드코딩으로 제외한다.
- *       → Ionicons·expo-router 아이콘이 통째로 누락되고, SPA 폴백(_redirects)이
+ *       → Ionicons·expo-router 아이콘이 통째로 누락되고, SPA 폴백이
  *         대신 index.html을 내려줘 "폰트가 text/html"인 상태가 된다.
  *
  * 해결: dist/assets/node_modules → dist/assets/vendor 로 옮기고,

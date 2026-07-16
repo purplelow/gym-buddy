@@ -122,7 +122,8 @@ Cloudflare 대시보드 → Workers & Pages → Create → Pages → Git 연결 
 npm run deploy   # build:web 후 wrangler로 dist 업로드
 ```
 
-- SPA 라우팅: [`public/_redirects`](public/_redirects)의 `/* /index.html 200`이 `/match/xxx` 같은 경로의 404를 막아줍니다 (Expo가 `dist/`로 자동 복사)
+- SPA 라우팅: [`wrangler.jsonc`](wrangler.jsonc)의 `not_found_handling: "single-page-application"`이 `/match/xxx` 같은 클라이언트 라우트를 index.html로 넘겨줍니다
+  > `_redirects`의 `/* /index.html 200`은 쓰지 마세요 — Workers 에셋이 무한 루프로 판단해 배포를 거부합니다(code 100324)
 - 배포 후 **Supabase Site URL / OAuth Redirect URI에 배포 도메인을 반드시 등록**해야 소셜 로그인이 동작합니다
 
 ---
@@ -153,7 +154,7 @@ npm run deploy   # build:web 후 wrangler로 dist 업로드
 
 ```
 supabase/schema.sql          # DB 스키마 · RLS · 시드 (SQL Editor에 붙여넣어 적용)
-public/_redirects            # Cloudflare Pages SPA 폴백
+wrangler.jsonc               # Cloudflare Workers 배포 설정 (SPA 라우팅)
 .env.example                 # 환경변수 템플릿
 
 src/

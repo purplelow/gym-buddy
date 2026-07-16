@@ -1,0 +1,16 @@
+{
+  // Cloudflare Workers (정적 에셋) 배포 설정
+  //
+  // ⚠️ SPA 라우팅을 _redirects의 `/* /index.html 200` 으로 하면 안 된다.
+  //    Workers 에셋은 그 규칙을 무한 루프로 판단해 배포를 거부한다.
+  //      Invalid _redirects configuration:
+  //      Infinite loop detected in this rule. [code: 100324]
+  //    → not_found_handling 으로 처리한다. (/match/xxx 같은 클라이언트 라우트)
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gym-buddy",
+  "compatibility_date": "2026-07-16",
+  "assets": {
+    "directory": "./dist/",
+    "not_found_handling": "single-page-application"
+  }
+}

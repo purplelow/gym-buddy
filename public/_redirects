@@ -1,9 +1,0 @@
-# Cloudflare Pages SPA 폴백
-# /match/xxx 같은 클라이언트 라우트를 index.html로 넘겨 404를 막는다.
-# (실제로 존재하는 정적 파일은 Pages가 먼저 서빙하므로 영향받지 않는다)
-#
-# ⚠️ 주의: wrangler는 업로드 시 node_modules 경로를 제외한다.
-#    따라서 에셋(폰트 등)이 assets/node_modules/... 로 출력되면 배포에서 누락되고,
-#    이 폴백 규칙이 대신 index.html을 내려줘 "폰트가 text/html"인 상태가 된다.
-#    → 폰트는 반드시 assets/fonts 처럼 프로젝트 경로에 둘 것. (src/app/_layout.tsx 참고)
-/*    /index.html   200
